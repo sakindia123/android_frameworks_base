@@ -1,4 +1,4 @@
-F,,,/*
+/*
  * File modifications copyright (C) 2012 The CyanogenMod Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1353,6 +1353,34 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         int sysDpi = ExtendedPropertiesUtils.getActualProperty("android.dpi");
         int sysUIDpi = ExtendedPropertiesUtils.getActualProperty("com.android.systemui.dpi");
 
+<<<<<<< HEAD
+        // SystemUI (status bar) layout policy
+        mShortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / density;
+
+        if (mShortSizeDp < 600) {
+            // 0-599dp: "phone" UI with a separate status & navigation bar
+            mHasSystemNavBar = false;
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.NAVIGATION_BAR_CAN_MOVE, 1) == 1) {
+                mNavigationBarCanMove = true;
+            } else {
+                mNavigationBarCanMove = false;
+            }
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.TABLET_UI, 0);
+        } else if (mShortSizeDp < 720) {
+            // 600+dp: "phone" UI with modifications for larger screens
+            mHasSystemNavBar = false;
+            mNavigationBarCanMove = false;
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.TABLET_UI, 2);
+        } else {
+            mHasSystemNavBar = false;
+            mNavigationBarCanMove = false;
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.TABLET_UI, 1);
+        }
+=======
         float statusBarHeight = ((float)mContext.getResources().getDimensionPixelSize(
                 com.android.internal.R.dimen.status_bar_height) *
                 DisplayMetrics.DENSITY_DEVICE / sysDpi) /
@@ -1384,6 +1412,27 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // 600+dp: "phone" UI with modifications for larger screens
             mHasSystemNavBar = false;
             mNavigationBarCanMove = false;
+        }
+
+        if (!mHasSystemNavBar) {
+             final boolean showByDefault = mContext.getResources().getBoolean(
+                     com.android.internal.R.bool.config_showNavigationBar);
+             mHasNavigationBar = Settings.System.getBoolean(mContext.getContentResolver(),
+                     Settings.System.NAVIGATION_BAR_SHOW, showByDefault);
+
+            /*
+             * at first boot up, we need to make sure navbar gets created
+             * (or obey framework setting).
+             * this should quickly get over-ridden by the settings observer	
+             * if it was disabled by the user.
+            */
+            if (mNavBarFirstBootFlag) {
+                mNavBarFirstBootFlag = false;
+             } else {
+                 mHasNavigationBar = mHasNavigationBar &&
+                         Settings.System.getBoolean(mContext.getContentResolver(),
+                                 Settings.System.NAVIGATION_BAR_SHOW_NOW, mHasNavigationBar);
+>>>>>>> 680bf3c... PA's hybrid engine
 
         if (!mHasSystemNavBar) {
             // Allow a system property to override this. Used by the emulator.
@@ -1404,7 +1453,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             int longSizeDp = longSize * DisplayMetrics.DENSITY_DEFAULT / density;
             int barHeightDp = mNavigationBarHeightForRotation[mLandscapeRotation]
                     * DisplayMetrics.DENSITY_DEFAULT / density;
+<<<<<<< HEAD
+            int aspect = ((mShortSizeDp-barHeightDp) * 16) / longSizeDp;
+=======
             int aspect = ((sysLayout-barHeightDp) * 16) / longSizeDp;
+>>>>>>> 680bf3c... PA's hybrid engine
             // We have computed the aspect ratio with the bar height taken
             // out to be 16:aspect.  If this is less than 9, then hiding
             // the navigation bar will provide more useful space for wide
@@ -1681,6 +1734,39 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mHasSoftInput = hasSoftInput;
                 updateRotation = true;
             }
+<<<<<<< HEAD
+=======
+
+            // Update navigation bar dimensions
+            boolean expanded = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
+            if (expanded) {
+                // Set the navigation bar's dimensions to 0 in expanded desktop mode
+                mNavigationBarWidthForRotation[mPortraitRotation]
+                        = mNavigationBarWidthForRotation[mUpsideDownRotation]
+                        = mNavigationBarWidthForRotation[mLandscapeRotation]
+                        = mNavigationBarWidthForRotation[mSeascapeRotation]
+                        = mNavigationBarHeightForRotation[mPortraitRotation]
+                        = mNavigationBarHeightForRotation[mUpsideDownRotation]
+                        = mNavigationBarHeightForRotation[mLandscapeRotation]
+                        = mNavigationBarHeightForRotation[mSeascapeRotation] = 0;
+            } else {
+                // Height of the navigation bar when presented horizontally at bottom
+                mNavigationBarHeightForRotation[mPortraitRotation]
+                        = mNavigationBarHeightForRotation[mUpsideDownRotation]
+                        = Math.round(navigationBarHeight);
+                mNavigationBarHeightForRotation[mLandscapeRotation]
+                        = mNavigationBarHeightForRotation[mSeascapeRotation]
+                        = Math.round(navigationBarHeightLandscape);
+
+                // Width of the navigation bar when presented vertically along one side
+                mNavigationBarWidthForRotation[mPortraitRotation]
+                        = mNavigationBarWidthForRotation[mUpsideDownRotation]
+                        = mNavigationBarWidthForRotation[mLandscapeRotation]
+                        = mNavigationBarWidthForRotation[mSeascapeRotation]
+                        = Math.round(navigationBarWidth);
+            }
+>>>>>>> 680bf3c... PA's hybrid engine
         }
         if (updateRotation) {
             updateRotation(true);
@@ -4590,8 +4676,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
 
             case KeyEvent.KEYCODE_POWER: {
-                if (mTopFullscreenOpaqueWindowState != null
-                        && (mTopFullscreenOpaqueWindowState.getAttrs().flags
+                if ((mTopFullscreenOpaqueWindowState.getAttrs().flags
                         & WindowManager.LayoutParams.PREVENT_POWER_KEY) != 0){
                     return result;
                 }
