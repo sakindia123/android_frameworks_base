@@ -1505,146 +1505,71 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mVolBtnMusicControls = (Settings.System.getIntForUser(resolver,
                     Settings.System.VOLBTN_MUSIC_CONTROLS, 1, UserHandle.USER_CURRENT) == 1);
 
-            if (mShortSizeDp < 600) {
-                mNavigationBarCanMove = (Settings.System.getInt(resolver,
-                        Settings.System.NAVIGATION_BAR_CAN_MOVE, 1) == 1);
-            }
+            mHasNavigationBar = !mHasSystemNavBar;
+
+            getDimensions();
 
             boolean keyRebindingEnabled = Settings.System.getInt(resolver,
                     Settings.System.HARDWARE_KEY_REBINDING, 0) == 1;
 
             if (!keyRebindingEnabled) {
                 if (mHasHomeKey) {
-                    mPressOnHomeBehavior = getStr(KEY_ACTION_HOME);
                     if (mHasAppSwitchKey) {
-                        mLongPressOnHomeBehavior = getStr(KEY_ACTION_NOTHING);
+                        mLongPressOnHomeBehavior = KEY_ACTION_NOTHING;
                     } else {
-                        mLongPressOnHomeBehavior = getStr(KEY_ACTION_APP_SWITCH);
+                        mLongPressOnHomeBehavior = KEY_ACTION_APP_SWITCH;
                     }
                 }
-                if (mHasBackKey) {
-                    mPressOnBackBehavior = getStr(KEY_ACTION_BACK);
-                    mLongPressOnBackBehavior = getStr(KEY_ACTION_NOTHING);
-                }
                 if (mHasMenuKey) {
-                    mPressOnMenuBehavior = getStr(KEY_ACTION_MENU);
+                    mPressOnMenuBehavior = KEY_ACTION_MENU;
                     if (mHasAssistKey) {
-                        mLongPressOnMenuBehavior = getStr(KEY_ACTION_NOTHING);
+                        mLongPressOnMenuBehavior = KEY_ACTION_NOTHING;
                     } else {
-                        mLongPressOnMenuBehavior = getStr(KEY_ACTION_SEARCH);
+                        mLongPressOnMenuBehavior = KEY_ACTION_SEARCH;
                     }
                 }
                 if (mHasAssistKey) {
-                    mPressOnAssistBehavior = getStr(KEY_ACTION_SEARCH);
-                    mLongPressOnAssistBehavior = getStr(KEY_ACTION_VOICE_SEARCH);
+                    mPressOnAssistBehavior = KEY_ACTION_SEARCH;
+                    mLongPressOnAssistBehavior = KEY_ACTION_VOICE_SEARCH;
                 }
                 if (mHasAppSwitchKey) {
-                    mPressOnAppSwitchBehavior = getStr(KEY_ACTION_APP_SWITCH);
-                    mLongPressOnAppSwitchBehavior = getStr(KEY_ACTION_NOTHING);
-                }
-                if (mHasCameraKey) {
-                    mPressOnCameraBehavior = getStr(KEY_ACTION_CAMERA);
-                    mLongPressOnCameraBehavior = getStr(KEY_ACTION_NOTHING);
+                    mPressOnAppSwitchBehavior = KEY_ACTION_APP_SWITCH;
+                    mLongPressOnAppSwitchBehavior = KEY_ACTION_NOTHING;
                 }
             } else {
                 if (mHasHomeKey) {
-                    mPressOnHomeBehavior = getDefString(resolver,
-                            Settings.System.KEY_HOME_ACTION, KEY_ACTION_HOME);
                     if (mHasAppSwitchKey) {
-                        mLongPressOnHomeBehavior = getDefString(resolver,
+                        mLongPressOnHomeBehavior = Settings.System.getInt(resolver,
                                 Settings.System.KEY_HOME_LONG_PRESS_ACTION, KEY_ACTION_NOTHING);
                     } else {
-                        mLongPressOnHomeBehavior = getDefString(resolver,
+                        mLongPressOnHomeBehavior = Settings.System.getInt(resolver,
                                 Settings.System.KEY_HOME_LONG_PRESS_ACTION, KEY_ACTION_APP_SWITCH);
                     }
                 }
-                if (mHasBackKey) {
-                    mPressOnBackBehavior = getDefString(resolver,
-                            Settings.System.KEY_BACK_ACTION, KEY_ACTION_BACK);
-                    mLongPressOnBackBehavior = getDefString(resolver,
-                            Settings.System.KEY_BACK_LONG_PRESS_ACTION, KEY_ACTION_NOTHING);
-                }
                 if (mHasMenuKey) {
-                    mPressOnMenuBehavior = getDefString(resolver,
+                    mPressOnMenuBehavior = Settings.System.getInt(resolver,
                             Settings.System.KEY_MENU_ACTION, KEY_ACTION_MENU);
                     if (mHasAssistKey) {
-                        mLongPressOnMenuBehavior = getDefString(resolver,
+                        mLongPressOnMenuBehavior = Settings.System.getInt(resolver,
                                 Settings.System.KEY_MENU_LONG_PRESS_ACTION, KEY_ACTION_NOTHING);
                     } else {
-                        mLongPressOnMenuBehavior = getDefString(resolver,
+                        mLongPressOnMenuBehavior = Settings.System.getInt(resolver,
                                 Settings.System.KEY_MENU_LONG_PRESS_ACTION, KEY_ACTION_SEARCH);
                     }
                 }
                 if (mHasAssistKey) {
-                    mPressOnAssistBehavior = getDefString(resolver,
+                    mPressOnAssistBehavior = Settings.System.getInt(resolver,
                             Settings.System.KEY_ASSIST_ACTION, KEY_ACTION_SEARCH);
-                    mLongPressOnAssistBehavior = getDefString(resolver,
+                    mLongPressOnAssistBehavior = Settings.System.getInt(resolver,
                             Settings.System.KEY_ASSIST_LONG_PRESS_ACTION, KEY_ACTION_VOICE_SEARCH);
                 }
                 if (mHasAppSwitchKey) {
-                    mPressOnAppSwitchBehavior = getDefString(resolver,
+                    mPressOnAppSwitchBehavior = Settings.System.getInt(resolver,
                             Settings.System.KEY_APP_SWITCH_ACTION, KEY_ACTION_APP_SWITCH);
-                    mLongPressOnAppSwitchBehavior = getDefString(resolver,
+                    mLongPressOnAppSwitchBehavior = Settings.System.getInt(resolver,
                             Settings.System.KEY_APP_SWITCH_LONG_PRESS_ACTION, KEY_ACTION_NOTHING);
                 }
-                if (mHasCameraKey) {
-                    mPressOnCameraBehavior = getDefString(resolver,
-                            Settings.System.KEY_CAMERA_ACTION, KEY_ACTION_CAMERA);
-                    mLongPressOnCameraBehavior = getDefString(resolver,
-                            Settings.System.KEY_CAMERA_LONG_PRESS_ACTION, KEY_ACTION_NOTHING);
-                }
-            }
-
-            final int showByDefault = mContext.getResources().getBoolean(
-                    com.android.internal.R.bool.config_showNavigationBar) ? 1 : 0;
-            mHasNavigationBar = Settings.System.getInt(resolver,
-                    Settings.System.NAVIGATION_BAR_SHOW, showByDefault) == 1;
-
-            if ((mExpandedState == 1 &&
-                (mExpandedMode == 1 || mExpandedMode == 3))
-                || !mHasNavigationBar) {
-                // Set the navigation bar's dimensions to 0 in expanded desktop mode
-                mNavigationBarWidthForRotation[mPortraitRotation]
-                        = mNavigationBarWidthForRotation[mUpsideDownRotation]
-                        = mNavigationBarWidthForRotation[mLandscapeRotation]
-                        = mNavigationBarWidthForRotation[mSeascapeRotation]
-                        = mNavigationBarHeightForRotation[mPortraitRotation]
-                        = mNavigationBarHeightForRotation[mUpsideDownRotation]
-                        = mNavigationBarHeightForRotation[mLandscapeRotation]
-                        = mNavigationBarHeightForRotation[mSeascapeRotation] = 0;
-                updateDisplayMetrics = true;
-            } else {
-                // Height of the navigation bar when presented horizontally at bottom *******
-                mNavigationBarHeightForRotation[mPortraitRotation] =
-                mNavigationBarHeightForRotation[mUpsideDownRotation] =
-                        Settings.System.getInt(
-                                mContext.getContentResolver(),
-                                Settings.System.NAVIGATION_BAR_HEIGHT,
-                                mContext.getResources()
-                                        .getDimensionPixelSize(
-                                                com.android.internal.R.dimen.navigation_bar_height));
-                mNavigationBarHeightForRotation[mLandscapeRotation] =
-                mNavigationBarHeightForRotation[mSeascapeRotation] =
-                        Settings.System.getInt(
-                                mContext.getContentResolver(),
-                                Settings.System.NAVIGATION_BAR_HEIGHT_LANDSCAPE,
-                                mContext.getResources()
-                                        .getDimensionPixelSize(
-                                                com.android.internal.R.dimen.navigation_bar_height_landscape));
-
-                // Width of the navigation bar when presented vertically along one side
-                mNavigationBarWidthForRotation[mPortraitRotation] =
-                mNavigationBarWidthForRotation[mUpsideDownRotation] =
-                mNavigationBarWidthForRotation[mLandscapeRotation] =
-                mNavigationBarWidthForRotation[mSeascapeRotation] =
-                        Settings.System.getInt(
-                                mContext.getContentResolver(),
-                                Settings.System.NAVIGATION_BAR_WIDTH,
-                                mContext.getResources()
-                                        .getDimensionPixelSize(
-                                                com.android.internal.R.dimen.navigation_bar_width));
-                updateDisplayMetrics = true;
-            }
+            } 
 
             // Configure rotation lock.
             int userRotation = Settings.System.getIntForUser(resolver,
