@@ -1212,12 +1212,49 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         try {
             mOrientationListener.setCurrentRotation(windowManager.getRotation());
         } catch (RemoteException ex) { }
+<<<<<<< HEAD
+        mSettingsObserver = new SettingsObserver(mHandler);
+        mSettingsObserver.observe();
+=======
         updateHybridLayout();
         mSettingsObserver = new SettingsObserver(mHandler);
         mSettingsObserver.observe();
-       
+
+        // Expanded desktop
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.EXPANDED_DESKTOP_STATE),
+                    false, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+
+                if (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_RESTART_LAUNCHER, 1) == 1) {
+                    // Restart default launcher activity
+                    final PackageManager mPm = mContext.getPackageManager();
+                    final ActivityManager am = (ActivityManager)mContext
+                            .getSystemService(Context.ACTIVITY_SERVICE);
+                    final Intent intent = new Intent(Intent.ACTION_MAIN); 
+                    intent.addCategory(Intent.CATEGORY_HOME); 
+                    final ResolveInfo res = mPm.resolveActivity(intent, 0);
+
+                    // Launcher is running task #1
+                    List<ActivityManager.RunningTaskInfo> runningTasks = am.getRunningTasks(1);
+                    if (runningTasks != null) {
+                        for (ActivityManager.RunningTaskInfo task : runningTasks) {
+                            String packageName = task.baseActivity.getPackageName();
+                            if (packageName.equals(res.activityInfo.packageName)) {
+                                closeApplication(packageName);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
         mUserInterfaceObserver = new UserInterfaceObserver(mHandler);
         mUserInterfaceObserver.observe();
+>>>>>>> ab80c52... UI change w/o reboot and navbar height
         mShortcutManager = new ShortcutManager(context, mHandler);
         mShortcutManager.observe();
         mUiMode = context.getResources().getInteger(
@@ -1386,7 +1423,80 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
         }
 
+<<<<<<< HEAD
+        // SystemUI (status bar) layout policy
+        int sysLayout = ExtendedPropertiesUtils.getActualProperty("com.android.systemui.layout");
+        int sysDpi = ExtendedPropertiesUtils.getActualProperty("android.dpi");
+        int sysUIDpi = ExtendedPropertiesUtils.getActualProperty("com.android.systemui.dpi");
+
+        float statusBarHeight = ((float)mContext.getResources().getDimensionPixelSize(
+                com.android.internal.R.dimen.status_bar_height) *
+                DisplayMetrics.DENSITY_DEVICE / sysDpi) /
+                DisplayMetrics.DENSITY_DEVICE * sysUIDpi;
+
+        float navigationBarHeight = ((float)mContext.getResources().getDimensionPixelSize(
+                com.android.internal.R.dimen.navigation_bar_height) *
+                DisplayMetrics.DENSITY_DEVICE / sysDpi) /
+                DisplayMetrics.DENSITY_DEVICE * sysUIDpi;
+
+        float navigationBarWidth = ((float)mContext.getResources().getDimensionPixelSize(
+                com.android.internal.R.dimen.navigation_bar_width) *
+                DisplayMetrics.DENSITY_DEVICE / sysDpi) /
+                DisplayMetrics.DENSITY_DEVICE * sysUIDpi;
+
+        float navigationBarHeightLandscape = ((float)mContext.getResources().getDimensionPixelSize(
+                com.android.internal.R.dimen.navigation_bar_height_landscape) *
+                DisplayMetrics.DENSITY_DEVICE / sysDpi) /
+                DisplayMetrics.DENSITY_DEVICE * sysUIDpi;
+
+        mStatusBarHeight = Math.round(statusBarHeight);
+        updateSettings();
+
+        if (sysLayout < 600) {
+            // 0-599dp: "phone" UI with a separate status & navigation bar
+            mHasSystemNavBar = false;
+            mNavigationBarCanMove = true;
+        } else if (sysLayout < 720) {
+            // 600+dp: "phone" UI with modifications for larger screens
+            mHasSystemNavBar = false;
+            mNavigationBarCanMove = false;
+        }
+
+        if (!mHasSystemNavBar) {
+            // Allow a system property to override this. Used by the emulator.
+            // See also hasNavigationBar().
+            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
+            if (!"".equals(navBarOverride)) {
+                if (navBarOverride.equals("1"))
+                    mHasNavigationBar = false;
+                else if (navBarOverride.equals("0"))
+                    mHasNavigationBar = true;
+            }
+        }
+
+        if (mHasSystemNavBar) {
+            // The system bar is always at the bottom.  If you are watching
+            // a video in landscape, we don't need to hide it if we can still
+            // show a 16:9 aspect ratio with it.
+            int longSizeDp = longSize * DisplayMetrics.DENSITY_DEFAULT / density;
+            int barHeightDp = mNavigationBarHeightForRotation[mLandscapeRotation]
+                    * DisplayMetrics.DENSITY_DEFAULT / density;
+            int aspect = ((sysLayout-barHeightDp) * 16) / longSizeDp;
+            // We have computed the aspect ratio with the bar height taken
+            // out to be 16:aspect.  If this is less than 9, then hiding
+            // the navigation bar will provide more useful space for wide
+            // screen movies.
+            mCanHideNavigationBar = aspect < 9;
+        } else if (mHasNavigationBar) {
+            // The navigation bar is at the right in landscape; it seems always
+            // useful to hide it for showing a video.
+            mCanHideNavigationBar = true;
+        } else {
+            mCanHideNavigationBar = false;
+        }
+=======
         getDimensions();
+>>>>>>> ab80c52... UI change w/o reboot and navbar height
 
         // For demo purposes, allow the rotation of the HDMI display to be controlled.
         // By default, HDMI locks rotation to landscape.
@@ -4673,8 +4783,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
 
             case KeyEvent.KEYCODE_POWER: {
-                if (mTopFullscreenOpaqueWindowState != null
-                        && (mTopFullscreenOpaqueWindowState.getAttrs().flags
+                if ((mTopFullscreenOpaqueWindowState.getAttrs().flags
                         & WindowManager.LayoutParams.PREVENT_POWER_KEY) != 0){
                     return result;
                 }
