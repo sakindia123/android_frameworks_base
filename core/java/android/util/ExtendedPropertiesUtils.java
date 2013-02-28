@@ -101,8 +101,19 @@ public class ExtendedPropertiesUtils {
             // Load default values to be used in case that property is
             // missing from configuration.
             boolean isSystemApp = info.path.contains("system/app");
-            int defaultDpi = Integer.parseInt(getProperty(BEERBONG_PREFIX + (isSystemApp ?
-                    "system_default_dpi" : (info.path.length() == 0 ? "0" : "user_default_dpi"))));
+            int defaultDpi = getActualProperty(BEERBONG_PREFIX + (isSystemApp ?
+                    "system_default_dpi" : (info.path.length() == 0 ? "0" : "user_default_dpi")));
+            int defaultLayout = getActualProperty(BEERBONG_PREFIX + "user_default_layout");
+
+            if (defaultLayout == 0) {
+                defaultLayout = getActualProperty("com.android.systemui.layout");
+            }
+            if (defaultDpi == 0) {
+                defaultDpi = getActualProperty("com.android.systemui.dpi");
+            }
+
+            // Layout fetching.
+            info.layout = Integer.parseInt(getProperty(info.name + BEERBONG_LAYOUT_SUFFIX, String.valueOf(defaultLayout)));
 
             // DPI fetching.
             info.dpi = Integer.parseInt(getProperty(info.name + BEERBONG_DPI_SUFFIX, String.valueOf(defaultDpi)));
