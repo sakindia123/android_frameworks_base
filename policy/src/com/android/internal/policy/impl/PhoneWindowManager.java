@@ -1660,14 +1660,23 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // 0-599dp: "phone" UI with a separate status & navigation bar
             mHasSystemNavBar = false;
             mNavigationBarCanMove = true;
+            Settings.System.putInt(mContext.getContentResolver(),
+                Settings.System.CURRENT_UI_MODE, 0);
+            resetScreenHelper();
         } else if (mSystemUiLayout < 720) {
             // 600+dp: "phone" UI with modifications for larger screens
             mHasSystemNavBar = false;
             mNavigationBarCanMove = false;
+            Settings.System.putInt(mContext.getContentResolver(),
+                Settings.System.CURRENT_UI_MODE, 2);
+            resetScreenHelper();
         } else if (mSystemUiLayout == 1000) {
             // 1000dp: "tablet" UI with a single combined status & navigation bar
             mHasSystemNavBar = true;
             mNavigationBarCanMove = false;
+            Settings.System.putInt(mContext.getContentResolver(),
+                Settings.System.CURRENT_UI_MODE, 1);
+            resetScreenHelper();
         }
    
         mHasNavigationBar = !mHasSystemNavBar;
