@@ -29,6 +29,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Slog;
+import android.view.animation.Animation;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;

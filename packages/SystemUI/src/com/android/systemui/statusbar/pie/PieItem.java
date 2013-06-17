@@ -28,6 +28,7 @@ import android.graphics.Path;
 import android.graphics.PorterDuff.Mode;
 import android.provider.Settings;
 import android.view.View;
+import android.view.animation.Animation;
 import android.widget.ImageView;
 
 import com.android.systemui.R;

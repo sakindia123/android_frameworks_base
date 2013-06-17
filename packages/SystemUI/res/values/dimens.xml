@@ -271,6 +271,9 @@
     <dimen name="pie_sysinfo_second_layer_radius">255dp</dimen>
     <dimen name="pie_sysinfo_height">85sp</dimen>
 
+    <!-- PA HALO -->
+    <dimen name="halo_content_max_width">250dp</dimen>
+
     <!-- App sidebar -->
     <dimen name="app_sidebar_item_size">60dp</dimen>
     <dimen name="app_sidebar_item_padding">2dp</dimen>
