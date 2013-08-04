@@ -3111,6 +3111,12 @@ public final class Settings {
          */
         public static final String STATUSBAR_BATTERY_BAR = "statusbar_battery_bar";
 
+	/**
+         * HALO size fraction, default is 1.0f (normal)
+         * @hide
+         */
+        public static final String HALO_SIZE = "halo_size";
+
         /**
          * @hide
          */
