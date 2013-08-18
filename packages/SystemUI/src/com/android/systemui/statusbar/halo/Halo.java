@@ -102,7 +102,7 @@ import android.widget.ImageButton;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar.NotificationClicker;
-import com.android.internal.statusbar.StatusBarNotification;
+import android.service.notification.StatusBarNotification;
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.systemui.statusbar.StatusBarIconView;
 import com.android.systemui.statusbar.NotificationData;
@@ -437,9 +437,9 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
             }
 
             if (mLastNotificationEntry.notification != null
-                    && mLastNotificationEntry.notification.notification != null
-                    && mLastNotificationEntry.notification.notification.tickerText != null) {
-                mNotificationText = mLastNotificationEntry.notification.notification.tickerText.toString();
+                    && mLastNotificationEntry.notification.getNotification() != null
+                    && mLastNotificationEntry.notification.getNotification().tickerText != null) {
+                mNotificationText = mLastNotificationEntry.notification.getNotification().tickerText.toString();
             }
             
             tick(mLastNotificationEntry, 0, 0, false, false);
@@ -1040,7 +1040,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
                 return;
             }
 
-            setHaloContentHeight((int)(mContext.getResources().getDimensionPixelSize(R.dimen.notification_min_height) * 0.7f));
+            setHaloContentHeight((int)(mContext.getResources().getDimensionPixelSize(R.dimen.notification_min_height) * 0.6f));
             mHaloTickerContent.setVisibility(View.GONE);
             mHaloTextView.setVisibility(View.VISIBLE);
             mHaloTextView.setText(tickerText);
@@ -1325,7 +1325,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
         }
 
         StatusBarNotification notification = entry.notification;
-        Notification n = notification.notification;
+        Notification n = notification.getNotification();
 
         // Deal with the intent
         mContentIntent = entry.getFloatingIntent();
@@ -1373,7 +1373,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
 
         boolean allowed = false; // default off
         try {
-            allowed = mNotificationManager.isPackageAllowedForHalo(notification.pkg);
+            allowed = mNotificationManager.isPackageAllowedForHalo(notification.getPackageName());
         } catch (android.os.RemoteException ex) {
             // System is dead
         }
