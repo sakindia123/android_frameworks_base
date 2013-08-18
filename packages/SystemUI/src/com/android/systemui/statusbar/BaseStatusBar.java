@@ -666,18 +666,24 @@ public abstract class BaseStatusBar extends SystemUI implements
                 return true;
             }
         };
+
+        // Listen for HALO state
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.HALO_ACTIVE), false, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                updateHalo();
+            }});
+
+	    mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.HALO_SIZE), false, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                restartHalo();
+            }});
+
+            updateHalo();
     }
-
-        // Listen for HALO state  
-        mContext.getContentResolver().registerContentObserver(  
-                Settings.System.getUriFor(Settings.System.HALO_ACTIVE), false, new ContentObserver(new Handler()) {  
-            @Override  
-            public void onChange(boolean selfChange) {  
-                updateHalo();  
-            }});  
-  
-        updateHalo(); 
-
 
     public void setHaloTaskerActive(boolean haloTaskerActive, boolean updateNotificationIcons) {  
         mHaloTaskerActive = haloTaskerActive;  
