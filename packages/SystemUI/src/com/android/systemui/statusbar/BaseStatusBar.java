@@ -338,6 +338,10 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     private boolean mDeviceProvisioned = false;
 
+    public IStatusBarService getService() {
+        return mBarService;
+    }
+
     public NotificationData getNotificationData() {
         return mNotificationData;
     } 
@@ -511,13 +515,15 @@ public abstract class BaseStatusBar extends SystemUI implements
 	SidebarObserver observer = new SidebarObserver(mHandler);
         observer.observe();
 
-        // Listen for HALO state
-        mContext.getContentResolver().registerContentObserver(
-                Settings.System.getUriFor(Settings.System.HALO_ACTIVE), false, new ContentObserver(new Handler()) {
-            @Override
-            public void onChange(boolean selfChange) {
-                updateHalo();
-            }});
+        // Listen for HALO state  
+        mContext.getContentResolver().registerContentObserver(  
+                Settings.System.getUriFor(Settings.System.HALO_ACTIVE), false, new ContentObserver(new Handler()) {  
+            @Override  
+            public void onChange(boolean selfChange) {  
+                updateHalo();  
+            }});  
+  
+        updateHalo(); 
 
 	    mContext.getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.HALO_SIZE), false, new ContentObserver(new Handler()) {
@@ -688,23 +694,6 @@ public abstract class BaseStatusBar extends SystemUI implements
                 return true;
             }
         };
-
-        // Listen for HALO state
-        mContext.getContentResolver().registerContentObserver(
-                Settings.System.getUriFor(Settings.System.HALO_ACTIVE), false, new ContentObserver(new Handler()) {
-            @Override
-            public void onChange(boolean selfChange) {
-                updateHalo();
-            }});
-
-	    mContext.getContentResolver().registerContentObserver(
-                Settings.System.getUriFor(Settings.System.HALO_SIZE), false, new ContentObserver(new Handler()) {
-            @Override
-            public void onChange(boolean selfChange) {
-                restartHalo();
-            }});
-
-            updateHalo();
     }
 
     public void dismissPopups() {

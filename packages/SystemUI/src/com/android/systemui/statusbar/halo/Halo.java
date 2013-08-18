@@ -1368,6 +1368,10 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
         mEffect.animateHaloBatch(n.number, -1, alwaysFlip, delay, msgType);
     }
 
+    public void updateTicker(StatusBarNotification notification) {
+        loadLastNotification(true);
+    }
+
     // This is the android ticker callback
     public void updateTicker(StatusBarNotification notification, String text) {
 
