@@ -52,17 +52,7 @@ public class NotificationData {
             this.notification = n;
             this.icon = ic;
         }
-<<<<<<< HEAD
-        public Entry(IBinder key, StatusBarNotification n, StatusBarIconView ic, Bitmap ri) {
-            this.key = key;
-            this.notification = n;
-            this.icon = ic;
-            this.roundIcon = ri;
-        }
-        public void setLargeView(View expandedLarge) {
-=======
 	public void setLargeView(View expandedLarge) {
->>>>>>> 9f444bc... --- HALO 2.0 ---
             this.expandedLarge = expandedLarge;
             writeBooleanTag(row, R.id.expandable_tag, expandedLarge != null);
         }
