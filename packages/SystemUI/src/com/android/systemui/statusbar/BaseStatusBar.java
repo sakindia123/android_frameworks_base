@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2010 The Android Open Source Project
  *
@@ -595,6 +594,10 @@ public abstract class BaseStatusBar extends SystemUI implements
                 mHalo = null;
             }
         } 
+        
+        // this calls attachPie() implicitly
+        mSettingsObserver.onChange(true);
+        mSettingsObserver.observe();
 
         mLocale = mContext.getResources().getConfiguration().locale;
     }
