@@ -1597,7 +1597,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
                                 mEffect.nap(HaloEffect.NAP_DELAY + HaloEffect.WAKE_TIME * 2);
                                 if (mHideTicker) mEffect.sleep(HaloEffect.SLEEP_DELAY + HaloEffect.WAKE_TIME * 2, HaloEffect.SLEEP_TIME, false);
                                 tick(entry, HaloEffect.WAKE_TIME * 2, 1000, false, true, false);
-                                mEffect.ping(mPaintHoloBlue, HaloEffect.WAKE_TIME * 2);
+                                mEffect.ping(mPaintHolo, HaloEffect.WAKE_TIME * 2);
                                 mPingNewcomer = false;
                             }
                     }
