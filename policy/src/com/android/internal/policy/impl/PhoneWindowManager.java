@@ -1,4 +1,4 @@
-F,,,/*
+/*
  * File modifications copyright (C) 2012 The CyanogenMod Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1348,7 +1348,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
         }
 
-     // SystemUI (status bar) layout policy
+        // SystemUI (status bar) layout policy
         int sysLayout = ExtendedPropertiesUtils.getActualProperty("com.android.systemui.layout");
         int sysDpi = ExtendedPropertiesUtils.getActualProperty("android.dpi");
         int sysUIDpi = ExtendedPropertiesUtils.getActualProperty("com.android.systemui.dpi");
@@ -1384,6 +1384,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // 600+dp: "phone" UI with modifications for larger screens
             mHasSystemNavBar = false;
             mNavigationBarCanMove = false;
+        }
 
         if (!mHasSystemNavBar) {
             // Allow a system property to override this. Used by the emulator.
@@ -5999,3 +6000,4 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         pw.print(prefix); pw.print("mUndockedHdmiRotation="); pw.println(mUndockedHdmiRotation);
     }
 }
+
