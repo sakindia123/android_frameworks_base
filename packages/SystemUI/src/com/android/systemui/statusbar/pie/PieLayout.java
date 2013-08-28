@@ -37,6 +37,7 @@ import android.widget.FrameLayout;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar;
+import com.android.systemui.statusbar.TransparencyManager;
 import com.android.systemui.statusbar.policy.PieController.Position;
 
 import java.util.ArrayList;
@@ -66,12 +67,15 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     // related to PIE_SIZE value
     public static final float PIE_ICON_START_SIZE_FACTOR = 0.95f;
 
+    private TransparencyManager mTransparencyManager;
+
     private Paint mBackgroundPaint = new Paint();
     private float mBackgroundFraction;
     private int mBackgroundTargetAlpha;
     private boolean mShowBackground;
     private Paint mSnapPaint = new Paint();
     private Paint mSnapActivePaint = new Paint();
+    private int mBackgroundPaintColor;
 
     private float mSnapRadius;
     private float mSnapRadiusSqr;
@@ -260,11 +264,12 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     }
     private OnSnapListener mOnSnapListener = null;
 
-    public PieLayout(Context context) {
+    public PieLayout(Context context, TransparencyManager tm) {
         super(context);
 
         mHandler = new Handler();
         mBackgroundAnimator.addUpdateListener(mUpdateListener);
+        mTransparencyManager = tm;
 
         setDrawingCacheEnabled(false);
         setVisibility(View.GONE);
@@ -325,13 +330,13 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
         float backgroundAlpha = (Settings.System.getFloat(mContext.getContentResolver(),
                 Settings.System.PIE_BACKGROUND_ALPHA, 0.3f));
 
-        int backgroundPaintColor = (Settings.System.getInt(mContext.getContentResolver(),
+        mBackgroundPaintColor = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.PIE_BACKGROUND_COLOR, -2));
-        if (backgroundPaintColor == -2) {
-            backgroundPaintColor = res.getColor(R.color.pie_overlay_color);
+        if (mBackgroundPaintColor == -2) {
+            mBackgroundPaintColor = res.getColor(R.color.pie_overlay_color);
         }
-        mBackgroundPaint.setColor(stripAlpha(backgroundPaintColor));
-        mBackgroundTargetAlpha = (int) ((1-backgroundAlpha) * 255);
+        mBackgroundPaint.setColor(stripAlpha(mBackgroundPaintColor));
+        mBackgroundTargetAlpha = (int) ((1 - backgroundAlpha) * 255);
     }
 
     private void setupSnapPoints(int width, int height) {
@@ -381,6 +386,11 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
             if (mShowBackground) {
                 mBackgroundPaint.setAlpha((int) (mBackgroundFraction * mBackgroundTargetAlpha));
                 canvas.drawPaint(mBackgroundPaint);
+                if (mTransparencyManager != null) {
+                    mTransparencyManager.setNavBarOverlay(
+                        mBackgroundFraction * mBackgroundTargetAlpha / 255,
+                        stripAlpha(mBackgroundPaintColor), false);
+                }
             }
 
             for (int i = 0; i < mSnapPoints.length; i++) {
@@ -643,6 +653,10 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
             if (mSnapPoints[i] != null) {
                 mSnapPoints[i].reset();
             }
+        }
+
+        if (mTransparencyManager != null && mShowBackground) {
+            mTransparencyManager.setNavBarOverlay(0.0f, 0, true);
         }
 
         updateActiveItem(null, false);

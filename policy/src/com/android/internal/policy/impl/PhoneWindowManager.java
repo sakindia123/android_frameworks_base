@@ -366,6 +366,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     int mExpandedMode;
 
     boolean mHideStatusBar;
+    boolean mToggleNotificationAndQSShade;
 
     private static final class PointerLocationInputEventReceiver extends InputEventReceiver {
         private final PointerLocationView mView;
@@ -674,7 +675,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVIGATION_BAR_SHOW), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BAR_CAN_MOVE), false, this);
+                    Settings.System.NAVIGATION_BAR_CAN_MOVE), false, this,
+                    UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.KEY_HOME_ACTION), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -1389,6 +1391,69 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         getDimensions();
 
+        mStatusBarHeight = mContext.getResources().getDimensionPixelSize(
+                com.android.internal.R.dimen.status_bar_height);
+
+        // SystemUI (status bar) layout policy
+        mShortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / density;
+
+        if (mShortSizeDp < 600) {
+            // 0-599dp: "phone" UI with a separate status & navigation bar
+            mHasSystemNavBar = false;
+            if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.NAVIGATION_BAR_CAN_MOVE, 1, UserHandle.USER_CURRENT) == 1) {
+                mNavigationBarCanMove = true;
+            } else {
+                mNavigationBarCanMove = false;
+            }
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.TABLET_UI, 0);
+        } else if (mShortSizeDp < 720) {
+            // 600+dp: "phone" UI with modifications for larger screens
+            mHasSystemNavBar = false;
+            mNavigationBarCanMove = false;
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.TABLET_UI, 2);
+        } else {
+            mHasSystemNavBar = false;
+            mNavigationBarCanMove = false;
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.TABLET_UI, 1);
+        }
+
+        if (!mHasSystemNavBar) {
+            // Allow a system property to override this. Used by the emulator.
+            // See also hasNavigationBar().
+            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
+            if (!"".equals(navBarOverride)) {
+                if (navBarOverride.equals("1"))
+                    mHasNavigationBar = false;
+                else if (navBarOverride.equals("0"))
+                    mHasNavigationBar = true;
+            }
+        }
+
+        if (mHasSystemNavBar) {
+            // The system bar is always at the bottom.  If you are watching
+            // a video in landscape, we don't need to hide it if we can still
+            // show a 16:9 aspect ratio with it.
+            int longSizeDp = longSize * DisplayMetrics.DENSITY_DEFAULT / density;
+            int barHeightDp = mNavigationBarHeightForRotation[mLandscapeRotation]
+                    * DisplayMetrics.DENSITY_DEFAULT / density;
+            int aspect = ((mShortSizeDp-barHeightDp) * 16) / longSizeDp;
+            // We have computed the aspect ratio with the bar height taken
+            // out to be 16:aspect.  If this is less than 9, then hiding
+            // the navigation bar will provide more useful space for wide
+            // screen movies.
+            mCanHideNavigationBar = aspect < 9;
+        } else if (mHasNavigationBar) {
+            // The navigation bar is at the right in landscape; it seems always
+            // useful to hide it for showing a video.
+            mCanHideNavigationBar = true;
+        } else {
+            mCanHideNavigationBar = false;
+        }
+
         // For demo purposes, allow the rotation of the HDMI display to be controlled.
         // By default, HDMI locks rotation to landscape.
         if ("portrait".equals(SystemProperties.get("persist.demo.hdmirotation"))) {
@@ -1464,10 +1529,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         boolean updateRotation = false, updateDisplayMetrics = false;
         ContentResolver resolver = mContext.getContentResolver();
 
-        mExpandedMode = Settings.System.getInt(mContext.getContentResolver(),
-                                Settings.System.EXPANDED_DESKTOP_MODE, 0);
-        mExpandedState = Settings.System.getInt(mContext.getContentResolver(),
-                                Settings.System.EXPANDED_DESKTOP_STATE, 0);
+        mExpandedMode = Settings.System.getInt(resolver,
+                Settings.System.EXPANDED_DESKTOP_MODE, 0);
+        mExpandedState = Settings.System.getInt(resolver,
+                Settings.System.EXPANDED_DESKTOP_STATE, 0);
+        mHideStatusBar = Settings.System.getInt(resolver,
+                Settings.System.HIDE_STATUSBAR, 0) == 1;
+        mToggleNotificationAndQSShade = Settings.System.getInt(resolver,
+                Settings.System.TOGGLE_NOTIFICATION_AND_QS_SHADE, 0) == 1;
 
         synchronized (mLock) {
             mEndcallBehavior = Settings.System.getIntForUser(resolver,
@@ -1509,6 +1578,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mHasNavigationBar = !mHasSystemNavBar;
 
             getDimensions();
+
+            if (mShortSizeDp < 600) {
+                mNavigationBarCanMove = (Settings.System.getIntForUser(resolver,
+                        Settings.System.NAVIGATION_BAR_CAN_MOVE, 1, UserHandle.USER_CURRENT) == 1);
+            }
 
             boolean keyRebindingEnabled = Settings.System.getInt(resolver,
                     Settings.System.HARDWARE_KEY_REBINDING, 0) == 1;
@@ -4090,7 +4164,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (DEBUG_LAYOUT) Log.i(TAG, "force=" + mForceStatusBar
                     + " forcefkg=" + mForceStatusBarFromKeyguard
                     + " top=" + mTopFullscreenOpaqueWindowState);
-            if (mForceStatusBar || mForceStatusBarFromKeyguard) {
+            if (mForceStatusBar || (mForceStatusBarFromKeyguard
+                    && !mHideStatusBar
+                    && (mExpandedState == 0
+                    || mExpandedState == 1 && mExpandedMode < 2))) {
                 if (DEBUG_LAYOUT) Log.v(TAG, "Showing status bar: forced");
                 if (mStatusBar.showLw(true)) changes |= FINISH_LAYOUT_REDO_LAYOUT;
             } else if (mTopFullscreenOpaqueWindowState != null) {
@@ -4106,14 +4183,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 // and mTopIsFullscreen is that that mTopIsFullscreen is set only if the window
                 // has the FLAG_FULLSCREEN set.  Not sure if there is another way that to be the
                 // case though.
-                mHideStatusBar = Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.HIDE_STATUSBAR, 0) == 1;
-                boolean toggleNotificationAndQSShade = Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.TOGGLE_NOTIFICATION_AND_QS_SHADE, 0) == 1;
-                if ((topIsFullscreen && !toggleNotificationAndQSShade)
-                        || (mExpandedState == 1 &&
-                        (mExpandedMode == 2 || mExpandedMode == 3) && !toggleNotificationAndQSShade)
-                        || (mHideStatusBar && !toggleNotificationAndQSShade)) {
+                if ((topIsFullscreen
+                        || mExpandedState == 1 && mExpandedMode > 1
+                        || mHideStatusBar) && !mToggleNotificationAndQSShade) {
                     if (DEBUG_LAYOUT) Log.v(TAG, "** HIDING status bar");
                     if (mStatusBar.hideLw(true)) {
                         changes |= FINISH_LAYOUT_REDO_LAYOUT;
