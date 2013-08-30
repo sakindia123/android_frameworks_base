@@ -1203,24 +1203,6 @@ public final class Settings {
         }
 
         /**
-         * @hide
-         * Convenience function for updating a single settings value as a
-         * boolean. This will either create a new entry in the table if the
-         * given name does not exist, or modify the value of the existing row
-         * with that name.  Note that internally setting values are always
-         * stored as strings, so this function converts the given value to a
-         * string (1 or 0) before storing it.
-         * 
-         * @param cr The ContentResolver to access.
-         * @param name The name of the setting to modify.
-         * @param value The new value for the setting.
-         * @return true if the value was set, false on database errors
-         */
-        public static boolean putBoolean(ContentResolver cr, String name, boolean value) {
-            return putString(cr, name, value ? "1" : "0");
-        }
-
-        /**
          * Convenience function for retrieving a single system settings value
          * as a {@code long}.  Note that internally setting values are always
          * stored as strings; this function converts the string to a {@code long}
@@ -3478,12 +3460,6 @@ public final class Settings {
         public static final String VOLBTN_MUSIC_CONTROLS = "volbtn_music_controls";
 
         /**
-         * Whether or not to launch default music player when headset is connected
-         * @hide
-         */
-        public static final String HEADSET_CONNECT_PLAYER = "headset_connect_player";
-
-        /**
          * Whether national data roaming should be used.
          * @hide
          */
@@ -3601,10 +3577,10 @@ public final class Settings {
 
         /**
          * Sets the lockscreen background style array helper
-         * if other then default backgroun the default wallpaper will be removed
+         * 0 = color fill, 1 = custom image, 2 = full transparent, 3 = default background
          * @hide
          */
-        public static final String LOCKSCREEN_BACKGROUND_VALUE = "lockscreen_background_value";
+        public static final String LOCKSCREEN_BACKGROUND_VALUE = "lockscreen_background_VALUE";
 
         /**
          * Sets the lockscreen background alpha
@@ -3747,48 +3723,6 @@ public final class Settings {
          * @hide
          */
         public static final String HALO_HIDE = "halo_hide";
-
-        /**
-         * HALO being minimal.
-         * @hide
-         */
-        public static final String HALO_STYLE = "halo_style";
-
-        /**
-         * HALO colors
-         * @hide
-         */
-        public static final String HALO_COLORS = "halo_colors";
-
-        /**
-         * HALO speech bubble color
-         * @hide
-         */
-        public static final String HALO_BUBBLE_COLOR = "halo_bubble_color";
-
-        /**
-         * HALO speech bubble text color
-         * @hide
-         */
-        public static final String HALO_BUBBLE_TEXT_COLOR = "halo_bubble_text_color";
-
-        /**
-         * HALO effect color
-         * @hide
-         */
-        public static final String HALO_EFFECT_COLOR = "halo_effect_color";
-
-        /**
-         * HALO circle bg color
-         * @hide
-         */
-        public static final String HALO_CIRCLE_COLOR = "halo_circle_color";
-
-	/**
-         * Do you want popups/floating windows?
-         * @hide
-         */
-        public static final String WE_WANT_POPUPS = "we_want_popups";
 
         /**
          * Whether to unlock the screen with the home key.  The value is boolean (1 or 0).
@@ -3960,6 +3894,12 @@ public final class Settings {
         public static final String TABLET_UI = "tablet_ui";
 
         /**
+         * Is current activity launcher or not
+         * @hide
+         */
+        public static final String IS_HOME = "is_home";
+
+        /**
          * @hide
          */
         public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
@@ -3967,7 +3907,18 @@ public final class Settings {
         /**
          * @hide
          */
+<<<<<<< HEAD
         public static final String NAVIGATION_BAR_CAN_MOVE = "navigation_bar_can_move";
+=======
+        public static final String PIE_CHEVRON_RIGHT = "pie_chevron_right";
+
+       // PIE COLORS EVERYWHERE! //
+
+       /**
+        * Key to store Torch state.
+        * @hide 
+        */
+        public static final String TORCH_STATE = "torch_state";
 
         /**
          * User Interface State
@@ -3975,6 +3926,19 @@ public final class Settings {
          * @hide
          */
         public static final String USER_INTERFACE_STATE = "user_interface_state";
+
+       /**
+        * Lefty mode
+        * @hide
+        */
+        public static final String NAVIGATION_BAR_LEFTY_MODE = "navigation_bar_lefty_mode";
+
+       /**
+        *
+        * @hide
+        */
+        public static final String SYSTEMUI_NAVRING_LONG_ENABLE = "systemui_navring_long_enable";
+>>>>>>> ab80c52... UI change w/o reboot and navbar height
 
         /**
          * @hide
@@ -4517,17 +4481,10 @@ public final class Settings {
 
         /**
          * Sets transparency mode of status and navigation bar
-         * 0 = only home, 1 = keyguard and home (default)
+         * 0 = only home, 1 = keyguard and home (default), 2 = always
          * @hide
          */
         public static final String STATUS_NAV_BAR_ALPHA_MODE = "status_nav_bar_alpha_mode";
-
-        /**
-         * Sets color mode of status and navigation bar
-         * 0 = colorize always, 1 = colorize on keyguard and home (default)
-         * @hide
-         */
-        public static final String STATUS_NAV_BAR_COLOR_MODE = "status_nav_bar_color_mode";
 
         /**
          * Sets color of statusbar
