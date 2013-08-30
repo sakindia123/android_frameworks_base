@@ -20,11 +20,7 @@ import android.os.RemoteException;
 
 /**
  * This class provides access to the system irda services.
-<<<<<<< HEAD
- *
-=======
  * @hide
->>>>>>> 2f9a8770fba7e7924cceaf20ec26b6635ba6ae44
  * <p>You do not
  * instantiate this class directly; instead, retrieve it through
  * {@link android.content.Context#getSystemService
