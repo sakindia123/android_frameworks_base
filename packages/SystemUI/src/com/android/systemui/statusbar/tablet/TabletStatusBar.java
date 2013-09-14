@@ -59,7 +59,6 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.ImageView;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -663,9 +662,11 @@ public class TabletStatusBar extends BaseStatusBar implements
         context.registerReceiver(mBroadcastReceiver, filter);
 
 	if (mRecreating) {
-            removeSidebarView();
-        }
-        addSidebarView();
+             removeSidebarView();
+        } else {
+            addActiveDisplayView();
+         }
+         addSidebarView(); 
 
         return sb;
     }
