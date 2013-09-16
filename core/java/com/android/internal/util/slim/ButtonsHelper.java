@@ -391,6 +391,9 @@ public class ButtonsHelper {
         } else if (clickAction.equals(ButtonsConstants.ACTION_POWER)) {
             resId = systemUiResources.getIdentifier(
                         SYSTEMUI_METADATA_NAME + ":drawable/ic_sysbar_power", null, null);
+        } else if (clickAction.equals(ButtonsConstants.ACTION_POWER_MENU)) {
+            resId = systemUiResources.getIdentifier(
+                        SYSTEMUI_METADATA_NAME + ":drawable/ic_sysbar_power_menu", null, null);
         } else if (clickAction.equals(ButtonsConstants.ACTION_NOTIFICATIONS)) {
             resId = systemUiResources.getIdentifier(
                         SYSTEMUI_METADATA_NAME + ":drawable/ic_sysbar_notifications", null, null);
@@ -403,6 +406,9 @@ public class ButtonsHelper {
         } else if (clickAction.equals(ButtonsConstants.ACTION_ASSIST)) {
             resId = systemUiResources.getIdentifier(
                         SYSTEMUI_METADATA_NAME + ":drawable/ic_navbar_googlenow", null, null);
+        } else if (clickAction.equals(ButtonsConstants.ACTION_KEYGUARD_SEARCH)) {
+            resId = systemUiResources.getIdentifier(
+                        SYSTEMUI_METADATA_NAME + ":drawable/search_light", null, null);
         } else if (clickAction.equals(ButtonsConstants.ACTION_VIB)) {
             resId = systemUiResources.getIdentifier(
                         SYSTEMUI_METADATA_NAME + ":drawable/ic_navbar_vib", null, null);
@@ -412,6 +418,12 @@ public class ButtonsHelper {
         } else if (clickAction.equals(ButtonsConstants.ACTION_VIB_SILENT)) {
             resId = systemUiResources.getIdentifier(
                         SYSTEMUI_METADATA_NAME + ":drawable/ic_navbar_ring_vib_silent", null, null);
+        } else if (clickAction.equals(ButtonsConstants.ACTION_EXPANDED_DESKTOP)) {
+            resId = systemUiResources.getIdentifier(
+                        SYSTEMUI_METADATA_NAME + ":drawable/ic_sysbar_expanded_desktop", null, null);
+        } else if (clickAction.equals(ButtonsConstants.ACTION_TORCH)) {
+            resId = systemUiResources.getIdentifier(
+                        SYSTEMUI_METADATA_NAME + ":drawable/ic_sysbar_torch", null, null);
         } else {
             resId = systemUiResources.getIdentifier(
                         SYSTEMUI_METADATA_NAME + ":drawable/ic_sysbar_null", null, null);

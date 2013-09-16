@@ -3601,10 +3601,10 @@ public final class Settings {
 
         /**
          * Sets the lockscreen background style array helper
-         * 0 = color fill, 1 = custom image, 2 = full transparent, 3 = default background
+         * if other then default backgroun the default wallpaper will be removed
          * @hide
          */
-        public static final String LOCKSCREEN_BACKGROUND_VALUE = "lockscreen_background_VALUE";
+        public static final String LOCKSCREEN_BACKGROUND_VALUE = "lockscreen_background_value";
 
         /**
          * Sets the lockscreen background alpha
@@ -3901,6 +3901,33 @@ public final class Settings {
           */
          public static final String SWAP_VOLUME_KEYS_BY_ROTATE = "swap_volume_keys_by_rotate";
 
+	/**
+         * ListView Animations
+         * 0 == None
+         * 1 == Wave (Left)
+         * 2 == Wave (Right)
+         * 3 == Scale
+         * 4 == Alpha
+         * 5 == Stack (Top)
+         * 6 == Stack (Bottom)
+         * 7 == Translate (Left)
+         * 8 == Translate (Right)
+         */
+        public static final String LISTVIEW_ANIMATION = "listview_animation";
+
+        /**
+         * ListView Interpolators
+         * 0 == None
+         * 1 == accelerate_interpolator
+         * 2 == decelerate_interpolator
+         * 3 == accelerate_decelerate_interpolator
+         * 4 == anticipate_interpolator
+         * 5 == overshoot_interpolator
+         * 6 == anticipate_overshoot_interpolator
+         * 7 == bounce_interpolator
+         */
+        public static final String LISTVIEW_INTERPOLATOR = "listview_interpolator";
+
          /**
           * Action to perform when the assistant (search) key is long-pressed. (Default is 6)
           * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
@@ -3960,12 +3987,6 @@ public final class Settings {
         public static final String TABLET_UI = "tablet_ui";
 
         /**
-         * Is current activity launcher or not
-         * @hide
-         */
-        public static final String IS_HOME = "is_home";
-
-        /**
          * @hide
          */
         public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
@@ -3974,6 +3995,13 @@ public final class Settings {
          * @hide
          */
         public static final String NAVIGATION_BAR_CAN_MOVE = "navigation_bar_can_move";
+
+        /**
+         * User Interface State
+         * 1 = Rebuild UI, resets to 0 automatically
+         * @hide
+         */
+        public static final String USER_INTERFACE_STATE = "user_interface_state";
 
         /**
          * @hide
@@ -4516,10 +4544,17 @@ public final class Settings {
 
         /**
          * Sets transparency mode of status and navigation bar
-         * 0 = only home, 1 = keyguard and home (default), 2 = always
+         * 0 = only home, 1 = keyguard and home (default)
          * @hide
          */
         public static final String STATUS_NAV_BAR_ALPHA_MODE = "status_nav_bar_alpha_mode";
+
+        /**
+         * Sets color mode of status and navigation bar
+         * 0 = colorize always, 1 = colorize on keyguard and home (default)
+         * @hide
+         */
+        public static final String STATUS_NAV_BAR_COLOR_MODE = "status_nav_bar_color_mode";
 
         /**
          * Sets color of statusbar
@@ -5121,6 +5156,13 @@ public final class Settings {
          * by network, gps, or other location providers.
          */
         public static final String ALLOW_MOCK_LOCATION = "mock_location";
+
+        /**
+         * Setting to allow the use of com.android.internal.telephony.SMSDispatcher#MockSmsReceiver
+         * to simulate the reception of SMS for testing purposes during application development.
+         * @hide
+         */
+         public static final String ALLOW_MOCK_SMS = "mock_sms";
 
         /**
          * A 64-bit number (as a hex string) that is randomly
@@ -6187,6 +6229,7 @@ public final class Settings {
         public static final String[] SETTINGS_TO_BACKUP = {
             BUGREPORT_IN_POWER_MENU,                            // moved to global
             ALLOW_MOCK_LOCATION,
+            ALLOW_MOCK_SMS,
             PARENTAL_CONTROL_ENABLED,
             PARENTAL_CONTROL_REDIRECT_URL,
             USB_MASS_STORAGE_ENABLED,                           // moved to global

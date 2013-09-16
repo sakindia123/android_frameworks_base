@@ -25,6 +25,7 @@ import com.android.internal.widget.SizeAdaptiveLayout;
 import com.android.systemui.R;
 import com.android.systemui.SearchPanelView;
 import com.android.systemui.SystemUI;
+import com.android.systemui.statusbar.TransparencyManager;
 import com.android.systemui.recent.RecentTasksLoader;
 import com.android.systemui.recent.RecentsActivity;
 import com.android.systemui.recent.TaskDescription;
@@ -147,7 +148,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     private WidgetView mWidgetView;
 
     private boolean mPieShowTrigger = false;
-    private boolean mDisableTriggers = false;
+    private boolean mForceBottomTrigger = false;
     private float mPieTriggerThickness;
     private float mPieTriggerHeight;
     private int mPieTriggerGravityLeftRight;
@@ -170,6 +171,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected CommandQueue mCommandQueue;
     protected IStatusBarService mBarService;
     protected H mHandler = createHandler();
+    public TransparencyManager mTransparencyManager;
 
     // all notifications
     protected NotificationData mNotificationData = new NotificationData();
@@ -453,8 +455,13 @@ public abstract class BaseStatusBar extends SystemUI implements
         mHaloActive = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.HALO_ACTIVE, 0) == 1;
 
-        createAndAddWindows();
+        if (mTransparencyManager == null) {
+            mTransparencyManager = new TransparencyManager(mContext);
+        }
+
         mWidgetView = new WidgetView(mContext,null);
+
+        createAndAddWindows();
 
         disable(switches[0]);
         setSystemUiVisibility(switches[1], 0xffffffff);
@@ -834,8 +841,8 @@ public abstract class BaseStatusBar extends SystemUI implements
         // Provide SearchPanel with a temporary parent to allow layout params to work.
         LinearLayout tmpRoot = new LinearLayout(mContext);
 
-         boolean navbarCanMove = Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.NAVIGATION_BAR_CAN_MOVE, 1) == 1;
+         boolean navbarCanMove = Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.NAVIGATION_BAR_CAN_MOVE, 1, UserHandle.USER_CURRENT) == 1;
 
          if (screenLayout() != Configuration.SCREENLAYOUT_SIZE_LARGE && !isScreenPortrait() && !navbarCanMove) {
                 mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(
@@ -1837,7 +1844,8 @@ public abstract class BaseStatusBar extends SystemUI implements
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVIGATION_BAR_SHOW), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BAR_CAN_MOVE), false, this);
+                    Settings.System.NAVIGATION_BAR_CAN_MOVE), false, this,
+                    UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVIGATION_BAR_HEIGHT), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -1859,7 +1867,7 @@ public abstract class BaseStatusBar extends SystemUI implements
                     mContext.getResources().getDimension(R.dimen.pie_trigger_thickness));
             mPieTriggerHeight = Settings.System.getFloat(mContext.getContentResolver(),
                     Settings.System.PIE_TRIGGER_HEIGHT,
-                    0.8f);
+                    0.7f);
             mPieTriggerGravityLeftRight = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.PIE_TRIGGER_GRAVITY_LEFT_RIGHT,
                     Gravity.CENTER_VERTICAL);
@@ -1884,7 +1892,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         if (isPieEnabled()) {
             // Create our container, if it does not exist already
             if (mPieContainer == null) {
-                mPieContainer = new PieLayout(mContext);
+                mPieContainer = new PieLayout(mContext, mTransparencyManager);
                 WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1934,9 +1942,9 @@ public abstract class BaseStatusBar extends SystemUI implements
         }
     }
 
-    public void disableTriggers(boolean disableTriggers) {
+    public void keyguardTriggers(boolean forceBottomTrigger) {
         if (isPieEnabled()) {
-            mDisableTriggers = disableTriggers;
+            mForceBottomTrigger = forceBottomTrigger;
             setupTriggers(false);
         }
     }
@@ -1948,11 +1956,13 @@ public abstract class BaseStatusBar extends SystemUI implements
     }
 
     public void setupTriggers(boolean forceDisableBottomAndTopTrigger) {
-            if (mDisableTriggers) {
-                updatePieTriggerMask(0);
+            if (!isPieEnabled()) {
                 return;
             }
-            mForceDisableBottomAndTopTrigger = forceDisableBottomAndTopTrigger;
+            boolean bottomTriggerEnabled = false;
+            boolean topTriggerEnabled = false;
+            boolean leftTriggerEnabled = false;
+            boolean rightTriggerEnabled = false;
 
             // get expanded desktop values
             int expandedMode = Settings.System.getInt(mContext.getContentResolver(),
@@ -1969,8 +1979,8 @@ public abstract class BaseStatusBar extends SystemUI implements
                     com.android.internal.R.bool.config_showNavigationBar) ? 1 : 0;
             boolean hasNavigationBar = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAVIGATION_BAR_SHOW, showByDefault) == 1;
-            boolean navBarCanMove = Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.NAVIGATION_BAR_CAN_MOVE, 1) == 1
+            boolean navBarCanMove = Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.NAVIGATION_BAR_CAN_MOVE, 1, UserHandle.USER_CURRENT) == 1
                         && screenLayout() != Configuration.SCREENLAYOUT_SIZE_LARGE
                         && screenLayout() != Configuration.SCREENLAYOUT_SIZE_XLARGE;
             boolean navigationBarHeight = Settings.System.getInt(mContext.getContentResolver(),
@@ -2000,78 +2010,59 @@ public abstract class BaseStatusBar extends SystemUI implements
                                     && navigationBarHeightLandscape);
 
             // let's set the triggers
-            if ((!expanded && hasNavigationBar && !autoHideStatusBar)
-                || mForceDisableBottomAndTopTrigger) {
-                if (disableRightTriggerForNavbar) {
-                    updatePieTriggerMask(Position.LEFT.FLAG);
-                } else {
-                    updatePieTriggerMask(Position.LEFT.FLAG
-                                    | Position.RIGHT.FLAG);
-                }
+            if (!forceDisableBottomAndTopTrigger && (mForceBottomTrigger
+                    && (!hasNavigationBar
+                        || disableRightTriggerForNavbar
+                        || (expandedMode == 1 || expandedMode == 3) && expanded))) {
+                bottomTriggerEnabled = true;
+            } else if (mForceBottomTrigger && hasNavigationBar) {
+                //do nothing all triggers are disabled and exit
+            } else if ((!expanded && hasNavigationBar && !autoHideStatusBar)
+                || forceDisableBottomAndTopTrigger) {
+                leftTriggerEnabled = true;
+                rightTriggerEnabled = true;
             } else if ((!expanded && !hasNavigationBar && !autoHideStatusBar)
                 || (expandedMode == 1 && expanded && !autoHideStatusBar)) {
-                if (!mPieImeIsShowing) {
-                    if (disableRightTriggerForNavbar) {
-                        updatePieTriggerMask(Position.LEFT.FLAG
-                                        | Position.BOTTOM.FLAG);
-                    } else {
-                        updatePieTriggerMask(Position.LEFT.FLAG
-                                        | Position.BOTTOM.FLAG
-                                        | Position.RIGHT.FLAG);
-                    }
-                } else {
-                    if (disableRightTriggerForNavbar) {
-                        updatePieTriggerMask(Position.LEFT.FLAG);
-                    } else {
-                        updatePieTriggerMask(Position.LEFT.FLAG
-                                        | Position.RIGHT.FLAG);
-                    }
-                }
+                leftTriggerEnabled = true;
+                rightTriggerEnabled = true;
+                bottomTriggerEnabled = true;
             } else if (expandedMode == 2 && expanded && hasNavigationBar
                         || !expanded && hasNavigationBar && autoHideStatusBar) {
-                if (disableRightTriggerForNavbar) {
-                    updatePieTriggerMask(Position.LEFT.FLAG
-                                    | Position.TOP.FLAG);
-                } else {
-                    updatePieTriggerMask(Position.LEFT.FLAG
-                                    | Position.RIGHT.FLAG
-                                    | Position.TOP.FLAG);
-                }
+                leftTriggerEnabled = true;
+                rightTriggerEnabled = true;
+                topTriggerEnabled = true;
             } else {
-                if (!mPieImeIsShowing) {
-                    if (disableRightTriggerForNavbar) {
-                        updatePieTriggerMask(Position.LEFT.FLAG
-                                        | Position.BOTTOM.FLAG
-                                        | Position.TOP.FLAG);
-                    } else {
-                        updatePieTriggerMask(Position.LEFT.FLAG
-                                        | Position.BOTTOM.FLAG
-                                        | Position.RIGHT.FLAG
-                                        | Position.TOP.FLAG);
-                    }
-                } else {
-                    if (disableRightTriggerForNavbar) {
-                        updatePieTriggerMask(Position.LEFT.FLAG
-                                        | Position.TOP.FLAG);
-                    } else {
-                        updatePieTriggerMask(Position.LEFT.FLAG
-                                        | Position.RIGHT.FLAG
-                                        | Position.TOP.FLAG);
-                    }
-                }
+                leftTriggerEnabled = true;
+                rightTriggerEnabled = true;
+                bottomTriggerEnabled = true;
+                topTriggerEnabled = true;
             }
+            if (disableRightTriggerForNavbar) {
+                    rightTriggerEnabled = false;
+            }
+            if (mPieImeIsShowing) {
+                    bottomTriggerEnabled = false;
+            }
+
+            int newMask;
+            newMask  = leftTriggerEnabled ? Position.LEFT.FLAG : 0;
+            newMask |= bottomTriggerEnabled ? Position.BOTTOM.FLAG : 0;
+            newMask |= rightTriggerEnabled ? Position.RIGHT.FLAG : 0;
+            newMask |= topTriggerEnabled ? Position.TOP.FLAG : 0;
+
+            updatePieTriggerMask(newMask, forceDisableBottomAndTopTrigger);
     }
 
-    private void updatePieTriggerMask(int newMask) {
+    private void updatePieTriggerMask(int newMask, boolean forceDisableBottomAndTopTrigger) {
         int oldState = mPieTriggerSlots & mPieTriggerMask;
+        boolean oldForceDisableBottomAndTopTrigger = mForceDisableBottomAndTopTrigger;
         mPieTriggerMask = newMask;
+        mForceDisableBottomAndTopTrigger = forceDisableBottomAndTopTrigger;
 
         // first we check, if it would make a change
         if ((mPieTriggerSlots & mPieTriggerMask) != oldState
-                || mForceDisableBottomAndTopTrigger) {
-            if (isPieEnabled()) {
-                refreshPieTriggers();
-            }
+                || mForceDisableBottomAndTopTrigger != oldForceDisableBottomAndTopTrigger) {
+            refreshPieTriggers();
         }
     }
 

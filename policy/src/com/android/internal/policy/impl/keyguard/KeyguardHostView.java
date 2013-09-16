@@ -35,9 +35,16 @@ import android.content.IntentSender;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.UserInfo;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.media.RemoteControlClient;
+import android.os.Bundle;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -173,6 +180,7 @@ public class KeyguardHostView extends KeyguardViewBase {
             mCameraDisabled = dpm.getCameraDisabled(null);
         }
 
+        cleanupAppWidgetIds();
         mSafeModeEnabled = LockPatternUtils.isSafeModeEnabled();
         mUserSetupCompleted = Settings.Secure.getIntForUser(mContext.getContentResolver(),
                 Settings.Secure.USER_SETUP_COMPLETE, 0, UserHandle.USER_CURRENT) != 0;
@@ -192,8 +200,6 @@ public class KeyguardHostView extends KeyguardViewBase {
 
         mAppWidgetHost = new AppWidgetHost(userContext, APPWIDGET_HOST_ID, mOnClickHandler,
                 Looper.myLooper());
-
-        cleanupAppWidgetIds();
 
         mAppWidgetManager = AppWidgetManager.getInstance(userContext);
 
@@ -418,6 +424,7 @@ public class KeyguardHostView extends KeyguardViewBase {
 
         setBackButtonEnabled(false);
 
+        updateBackground();
         addDefaultWidgets();
 
         addWidgetsFromSettings();
@@ -452,6 +459,46 @@ public class KeyguardHostView extends KeyguardViewBase {
             return true;
         }
     };
+
+    private void updateBackground() {
+        String background = Settings.System.getStringForUser(getContext().getContentResolver(),
+                Settings.System.LOCKSCREEN_BACKGROUND, UserHandle.USER_CURRENT);
+
+        if (background == null) {
+            return;
+        }
+
+        Drawable back = null;
+        int bgAlpha = (int)((1 - (Settings.System.getFloatForUser(getContext().getContentResolver(),
+                Settings.System.LOCKSCREEN_ALPHA, 0.0f, UserHandle.USER_CURRENT))) * 255);
+
+        if (!background.isEmpty()) {
+            try {
+                back = new ColorDrawable(Integer.parseInt(background));
+            } catch(NumberFormatException e) {
+                Log.e(TAG, "Invalid background color " + background);
+            }
+        } else {
+            try {
+                Context settingsContext = getContext().createPackageContext("com.android.settings", 0);
+                String wallpaperFile = settingsContext.getFilesDir() + "/lockwallpaper";
+                Bitmap backgroundBitmap = BitmapFactory.decodeFile(wallpaperFile);
+                back = new BitmapDrawable(getContext().getResources(), backgroundBitmap);
+            } catch (NameNotFoundException e) {
+                // Do nothing here
+            }
+        }
+        if (back != null) {
+            back.setAlpha(bgAlpha);
+            Drawable overlay = new ColorDrawable(BACKGROUND_COLOR);
+            Drawable[] layers = new Drawable[] {
+                back,
+                overlay
+            };
+            LayerDrawable layerDrawable = new LayerDrawable(layers);
+            setBackground(layerDrawable);
+        }
+    }
 
     private void setBackButtonEnabled(boolean enabled) {
         if (mContext instanceof Activity) return;  // always enabled in activity mode
@@ -1149,7 +1196,7 @@ public class KeyguardHostView extends KeyguardViewBase {
 
         if (Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.LOCKSCREEN_MAXIMIZE_WIDGETS, 0, UserHandle.USER_CURRENT) == 1) {
-            mSlidingChallengeLayout.showChallenge(false);
+            mSlidingChallengeLayout.fadeOutChallenge();
         }
     }
 
@@ -1186,6 +1233,10 @@ public class KeyguardHostView extends KeyguardViewBase {
         AppWidgetProviderInfo appWidgetInfo = mAppWidgetManager.getAppWidgetInfo(appId);
         if (appWidgetInfo != null) {
             AppWidgetHostView view = mAppWidgetHost.createView(mContext, appId, appWidgetInfo);
+            Bundle options = new Bundle();
+            options.putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY,
+                AppWidgetProviderInfo.WIDGET_CATEGORY_KEYGUARD);
+            view.updateAppWidgetOptions(options);
             addWidget(view, pageIndex);
             return true;
         } else {

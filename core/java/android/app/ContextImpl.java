@@ -87,11 +87,14 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.IPowerManager;
 import android.os.IUserManager;
+import android.hardware.IIrdaManager;
+import android.hardware.IrdaManager;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.SystemVibrator;
 import android.os.UserManager;
@@ -99,11 +102,14 @@ import android.os.storage.StorageManager;
 import android.telephony.TelephonyManager;
 import android.content.ClipboardManager;
 import android.util.AndroidRuntimeException;
+import android.util.DisplayMetrics;
+import android.util.ExtendedPropertiesUtils;
 import android.util.Log;
 import android.util.Slog;
 import android.view.CompatibilityInfoHolder;
 import android.view.ContextThemeWrapper;
 import android.view.Display;
+import android.view.WindowManager;
 import android.view.WindowManagerImpl;
 import android.view.accessibility.AccessibilityManager;
 import android.view.inputmethod.InputMethodManager;
@@ -553,6 +559,13 @@ class ContextImpl extends Context {
                 IAppOpsService service = IAppOpsService.Stub.asInterface(b);
                 return new AppOpsManager(ctx, service);
             }});
+
+        registerService(IRDA_SERVICE, new StaticServiceFetcher() {
+                public Object createStaticService() {
+                    IBinder b = ServiceManager.getService(IRDA_SERVICE);
+                    IIrdaManager service = IIrdaManager.Stub.asInterface(b);
+                    return new IrdaManager(service);
+                }});
     }
 
     static ContextImpl getImpl(Context context) {
@@ -1928,6 +1941,89 @@ class ContextImpl extends Context {
         mDisplay = context.mDisplay;
         mOuterContext = this;
     }
+    
+    static void init(ActivityThread thread) {
+        if (ExtendedPropertiesUtils.mMainThread == null) {
+            try {
+                // If hybrid is not enabled, we cannot block the rest of the proccess,
+                // because it may cause a lot of misbehaviours, and avoiding initialization
+                // of vital variables used on ExtendedPropertiesUtils, may lead to crashes.
+                // Then we just set all applications to stock configuration. They will be
+                // still runned under hybrid engine.
+                if (ExtendedPropertiesUtils.getProperty(ExtendedPropertiesUtils.BEERBONG_PREFIX
+                        + "hybrid_mode").equals("1")) {
+                    ExtendedPropertiesUtils.sIsHybridModeEnabled = true;
+                }
+
+                // Save current thread into global context
+                ExtendedPropertiesUtils.mMainThread = thread;
+
+                // Load hashmap, in order to get latest properties
+                ExtendedPropertiesUtils.refreshProperties();
+  
+                // Try to get the context for the current thread. If something
+                // goes wrong, we throw an exception.
+                ContextImpl context = createSystemContext(thread);
+                if (context == null) {
+                    throw new NullPointerException();
+                }
+
+                // If we sucessfully created the context, bind it to framework
+                LoadedApk info = new LoadedApk(thread, "android", context, null,
+                    CompatibilityInfo.DEFAULT_COMPATIBILITY_INFO);
+                if (info == null) {
+                    throw new NullPointerException();
+                }
+
+                context.init(info, null, thread);
+                ExtendedPropertiesUtils.mContext = context;
+                
+                // Get default display
+                WindowManager wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+                ExtendedPropertiesUtils.mDisplay = wm.getDefaultDisplay();
+                if (ExtendedPropertiesUtils.mDisplay == null) {
+                    throw new NullPointerException();
+                }
+                                            
+                // Load package manager, so it's accessible system wide
+                ExtendedPropertiesUtils.mPackageManager = 
+                    ExtendedPropertiesUtils.mContext.getPackageManager();
+                if (ExtendedPropertiesUtils.mPackageManager == null) {
+                    throw new NullPointerException();
+                }
+
+                // Get package list and fetch PID
+                ExtendedPropertiesUtils.mPackageList = 
+                    ExtendedPropertiesUtils.mPackageManager.getInstalledPackages(0);
+                ExtendedPropertiesUtils.mGlobalHook.pid = android.os.Process.myPid();
+                ExtendedPropertiesUtils.mRomLcdDensity = SystemProperties.getInt("qemu.sf.lcd_density",
+                    SystemProperties.getInt("ro.sf.lcd_density", DisplayMetrics.DENSITY_DEFAULT));
+
+                // After we have PID, we get app info using it
+                ExtendedPropertiesUtils.mGlobalHook.info = 
+                    ExtendedPropertiesUtils.getAppInfoFromPID(ExtendedPropertiesUtils.mGlobalHook.pid);
+                if (ExtendedPropertiesUtils.mGlobalHook.info != null) {
+                    // If the global hook info isn't null, we load the name, package name
+                    // and path for the global hook
+                    ExtendedPropertiesUtils.mGlobalHook.name = 
+                        ExtendedPropertiesUtils.mGlobalHook.info.packageName;
+                    ExtendedPropertiesUtils.mGlobalHook.path = 
+                        ExtendedPropertiesUtils.mGlobalHook.info.sourceDir.substring(0,
+                        ExtendedPropertiesUtils.mGlobalHook.info.sourceDir.lastIndexOf("/"));
+                    ExtendedPropertiesUtils.setAppConfiguration(ExtendedPropertiesUtils.mGlobalHook);
+                } else {
+                    // We're dealing with "android" package. This is framework itself
+                    ExtendedPropertiesUtils.mGlobalHook.name = "android";
+                    ExtendedPropertiesUtils.mGlobalHook.path = "";
+                    ExtendedPropertiesUtils.setAppConfiguration(ExtendedPropertiesUtils.mGlobalHook);
+                }
+            } catch (Exception e) { 
+                // We use global exception to catch a lot of possible crashes.
+                // This is not a dirty workaround, but an expected behaviour
+                ExtendedPropertiesUtils.mMainThread = null;
+            }
+        }        
+    }
 
     final void init(LoadedApk packageInfo, IBinder activityToken, ActivityThread mainThread) {
         init(packageInfo, activityToken, mainThread, null, null, Process.myUserHandle());
@@ -1935,6 +2031,7 @@ class ContextImpl extends Context {
 
     final void init(LoadedApk packageInfo, IBinder activityToken, ActivityThread mainThread,
             Resources container, String basePackageName, UserHandle user) {
+        init(mainThread);
         mPackageInfo = packageInfo;
         mBasePackageName = basePackageName != null ? basePackageName : packageInfo.mPackageName;
         mResources = mPackageInfo.getResources(mainThread);
@@ -1957,6 +2054,7 @@ class ContextImpl extends Context {
     }
 
     final void init(Resources resources, ActivityThread mainThread, UserHandle user) {
+        init(mainThread);
         mPackageInfo = null;
         mBasePackageName = null;
         mResources = resources;
