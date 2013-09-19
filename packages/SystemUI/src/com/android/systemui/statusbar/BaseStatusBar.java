@@ -527,6 +527,18 @@ public abstract class BaseStatusBar extends SystemUI implements
 	SidebarObserver observer = new SidebarObserver(mHandler);
         observer.observe();
 
+        // this calls attachPie() implicitly
+        mSettingsObserver.onChange(true);
+        mSettingsObserver.observe();
+
+        // Listen for HALO enabled switch
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.HALO_ENABLED), false, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                updateHalo();
+            }});
+
         // Listen for HALO state  
         mContext.getContentResolver().registerContentObserver(  
                 Settings.System.getUriFor(Settings.System.HALO_ACTIVE), false, new ContentObserver(new Handler()) {  
