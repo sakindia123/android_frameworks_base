@@ -663,6 +663,7 @@ public class TabletStatusBar extends BaseStatusBar implements
 
 	if (mRecreating) {
              removeSidebarView();
+            // placeholder
         } else {
             addActiveDisplayView();
          }
