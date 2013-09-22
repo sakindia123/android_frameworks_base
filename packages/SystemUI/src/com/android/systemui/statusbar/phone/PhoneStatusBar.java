@@ -619,6 +619,7 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         if (mRecreating) {
              removeSidebarView();
+            // placeholder
         } else {
             addActiveDisplayView();
          }
