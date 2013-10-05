@@ -2590,6 +2590,60 @@ public final class Settings {
          */
         public static final String LOCKSCREEN_SHORTCUTS_LONGPRESS = "lockscreen_shortcuts_longpress";
 
+	/**
+         * Whether to display notifications on screen when screen is off
+         * @hide
+         */
+        public static final String ENABLE_ACTIVE_DISPLAY = "enable_active_display";
+
+        /**
+         * Whether to display notification messages around ring
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_TEXT = "active_display_text";
+
+        /**
+         * Time to redisplay notifications on screen from when screen turns off, 0 = never redisplay
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_REDISPLAY = "active_display_redisplay";
+
+        /**
+         * Brightness of the display when displaying the active display view
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_BRIGHTNESS = "active_display_brightness";
+
+        /**
+         * Display active display view when device comes out of the user's pocket, etc...
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_POCKET_MODE = "active_display_pocket_mode";
+
+        /**
+         * Whether to include ongoing/non-clearable notifications
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_ALL_NOTIFICATIONS = "active_display_all_notifications";
+
+        /**
+         * Whether to display AM/PM after time when in 12h format
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_SHOW_AMPM = "active_display_show_ampm";
+
+        /**
+         * Whether to display the date above the time
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_SHOW_DATE = "active_display_show_date";
+
+        /**
+         * Whether to invert the colors when in bright light
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_SUNLIGHT_MODE = "active_display_sunlight_mode";
+
         /**
          * @deprecated Use {@link android.provider.Settings.Global#LOW_BATTERY_SOUND}
          * instead
@@ -2811,7 +2865,7 @@ public final class Settings {
 
         /**
          * Pie background color
-         * @hide
+                  * @hide
          */
         public static final String PIE_BACKGROUND_COLOR = "pie_background_color";
 
@@ -2871,6 +2925,36 @@ public final class Settings {
          * @hide
          */
         public static final String PIE_BUTTONS_CONFIG_SECOND_LAYER = "pie_buttons_config_second_layer";
+
+        /**
+         * HALO ninja?, should default to 0 (no, do not disappear when empty)
+         * @hide
+         */
+        public static final String HALO_NINJA = "halo_ninja";
+
+        /**
+         * HALO message box?, should default to 1 (yes, show message box on incoming notification)
+         * @hide
+         */
+        public static final String HALO_MSGBOX = "halo_msgbox";
+
+        /**
+         * HALO notificatoin count?, should default to 4 (both)
+         * @hide
+         */
+        public static final String HALO_NOTIFY_COUNT = "halo_notify_count";
+
+        /**
+         * HALO message box animation?, should default to 2 (flip animation)
+         * @hide
+         */
+        public static final String HALO_MSGBOX_ANIMATION = "halo_msgbox_animation";
+
+        /**
+         * HALO unlock ping?, should default to 0 (no, do not ping on unlock)
+         * @hide
+         */
+        public static final String HALO_UNLOCK_PING = "halo_unlock_ping";
 
         /**
          * Quick Settings Panel Tiles to Use
